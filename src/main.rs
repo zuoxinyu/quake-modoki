@@ -63,17 +63,29 @@ unsafe extern "system" fn ctrl_handler(ctrl_type: u32) -> BOOL {
 #[derive(Serialize, Deserialize)]
 struct MyConfig {
     version: u8,
-    key_toggle: String,
-    #[serde(alias = "key_regist")]
-    key_track: String,
+    shortcuts: ShortcutsConfig,
+}
+
+#[derive(Serialize, Deserialize)]
+struct ShortcutsConfig {
+    toggle: String,
+    track: String,
 }
 
 impl Default for MyConfig {
     fn default() -> Self {
         Self {
             version: 1,
-            key_toggle: "F8".to_string(),
-            key_track: "Ctrl+Alt+Q".to_string(),
+            shortcuts: ShortcutsConfig::default(),
+        }
+    }
+}
+
+impl Default for ShortcutsConfig {
+    fn default() -> Self {
+        Self {
+            toggle: "F8".to_string(),
+            track: "Ctrl+Alt+Q".to_string(),
         }
     }
 }
@@ -117,13 +129,20 @@ fn main() -> anyhow::Result<()> {
         GlobalHotKeyManager::new().map_err(|e| anyhow::anyhow!("GlobalHotKeyManager: {e}"))?;
 
     let default_cfg = MyConfig::default();
-    let hotkey_toggle =
-        parse_hotkey_or_default(&cfg.key_toggle, &default_cfg.key_toggle, "key_toggle");
+    let hotkey_toggle = parse_hotkey_or_default(
+        &cfg.shortcuts.toggle,
+        &default_cfg.shortcuts.toggle,
+        "shortcuts.toggle",
+    );
     manager
         .register(hotkey_toggle)
         .map_err(|e| anyhow::anyhow!("Toggle hotkey register: {e}"))?;
 
-    let hotkey_track = parse_hotkey_or_default(&cfg.key_track, &default_cfg.key_track, "key_track");
+    let hotkey_track = parse_hotkey_or_default(
+        &cfg.shortcuts.track,
+        &default_cfg.shortcuts.track,
+        "shortcuts.track",
+    );
     manager
         .register(hotkey_track)
         .map_err(|e| anyhow::anyhow!("Track hotkey register: {e}"))?;

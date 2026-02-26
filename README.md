@@ -17,6 +17,8 @@ Windows utility enabling Quake Mode behavior—any window slides in/out from scr
 - 🔔 **Desktop notification** — Toast when window tracked
 - 🚀 **Auto-launch** — Optional startup with Windows (Registry-based)
 - 🖱️ **Edge trigger** — Show/hide by moving cursor to screen edge (toggleable)
+- ⌨️ **Configurable hotkeys** — Override hotkeys via config file
+- 🧾 **Open config from tray** — Quick access to the config file via tray menu
 
 ## Installation
 
@@ -31,7 +33,24 @@ cargo install quake-modoki --locked
 | `Ctrl+Alt+Q` | Track current window |
 | `F8` | Toggle window visibility |
 
-Tray icon menu: Untrack / Edge trigger / Start with Windows / Exit
+Tray icon menu: Untrack / Open config file / Edge trigger / Start with Windows / Exit
+
+### Config
+
+Hotkeys are loaded from the config file. The easiest way to find it is:
+
+1. Right-click the tray icon
+2. Select `Open config file`
+
+Example:
+
+```toml
+version = 1
+
+[shortcuts]
+toggle = "F8"
+track = "Ctrl+Alt+Q"
+```
 
 ## Development
 

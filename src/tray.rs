@@ -17,6 +17,7 @@ pub enum TrayError {
 pub struct TrayState {
     _icon: TrayIcon,
     menu_untrack: MenuId,
+    menu_open_config: MenuId,
     menu_autolaunch: MenuId,
     menu_edge_trigger: MenuId,
     menu_exit: MenuId,
@@ -31,6 +32,7 @@ impl TrayState {
         // Create menu items
         let status_item = MenuItem::with_id("status", "No window tracked", false, None);
         let untrack_item = MenuItem::with_id("untrack", "Untrack", true, None);
+        let open_config_item = MenuItem::with_id("open_config", "Open config file", true, None);
         let autolaunch_item =
             CheckMenuItem::with_id("autolaunch", "Start with Windows", true, false, None);
         let edge_trigger_item =
@@ -39,6 +41,7 @@ impl TrayState {
 
         // Store IDs
         let menu_untrack = untrack_item.id().clone();
+        let menu_open_config = open_config_item.id().clone();
         let menu_autolaunch = autolaunch_item.id().clone();
         let menu_edge_trigger = edge_trigger_item.id().clone();
         let menu_exit = exit_item.id().clone();
@@ -50,6 +53,8 @@ impl TrayState {
         menu.append(&PredefinedMenuItem::separator())
             .map_err(|e| TrayError::Menu(e.to_string()))?;
         menu.append(&untrack_item)
+            .map_err(|e| TrayError::Menu(e.to_string()))?;
+        menu.append(&open_config_item)
             .map_err(|e| TrayError::Menu(e.to_string()))?;
         menu.append(&autolaunch_item)
             .map_err(|e| TrayError::Menu(e.to_string()))?;
@@ -74,6 +79,7 @@ impl TrayState {
         Ok(Self {
             _icon: tray,
             menu_untrack,
+            menu_open_config,
             menu_autolaunch,
             menu_edge_trigger,
             menu_exit,
@@ -105,6 +111,11 @@ impl TrayState {
     /// Check if event matches autolaunch menu
     pub fn is_autolaunch(&self, id: &MenuId) -> bool {
         *id == self.menu_autolaunch
+    }
+
+    /// Check if event matches open config menu
+    pub fn is_open_config(&self, id: &MenuId) -> bool {
+        *id == self.menu_open_config
     }
 
     /// Check if event matches exit menu

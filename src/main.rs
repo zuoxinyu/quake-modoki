@@ -17,6 +17,7 @@ use animation::{AnimConfig, run_animation};
 use global_hotkey::hotkey::HotKey;
 use global_hotkey::{GlobalHotKeyEvent, GlobalHotKeyManager, HotKeyState};
 use serde::{Deserialize, Serialize};
+use std::process::Command;
 use tray::TrayState;
 use windows::Win32::Foundation::{HWND, LPARAM, POINT, RECT};
 use windows::Win32::Graphics::Gdi::{
@@ -449,6 +450,10 @@ fn handle_menu_event(event: &muda::MenuEvent, tray: &TrayState, edge_state: &mut
                 error!("Auto-launch toggle failed: {e}");
             }
         }
+    } else if tray.is_open_config(id) {
+        if let Err(e) = open_config_file() {
+            error!("Open config file failed: {e}");
+        }
     } else if tray.is_edge_trigger(id) {
         // Toggle edge trigger
         match edge::toggle() {
@@ -462,6 +467,21 @@ fn handle_menu_event(event: &muda::MenuEvent, tray: &TrayState, edge_state: &mut
             }
         }
     }
+}
+
+fn open_config_file() -> anyhow::Result<()> {
+    let path = confy::get_configuration_file_path("quake-modoki", None)?;
+    let path_str = path
+        .to_str()
+        .ok_or_else(|| anyhow::anyhow!("config path is not valid UTF-8"))?;
+
+    Command::new("cmd")
+        .args(["/C", "start", "", path_str])
+        .spawn()
+        .map_err(|e| anyhow::anyhow!("launch failed: {e}"))?;
+
+    info!(path = %path.display(), "Opened config file");
+    Ok(())
 }
 
 /// Register foreground window with tray status update

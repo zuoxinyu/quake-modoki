@@ -15,6 +15,7 @@ exclude = [
     ".github/",
     ".pre-commit-config.yaml",
     "CLAUDE.md",
+    "AGENTS.md",
     "assets/icon.png",
     "assets/demo.gif",
 ]

@@ -14,8 +14,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use tracing::{debug, error, info, trace, warn};
 
 use animation::{AnimConfig, run_animation};
-use global_hotkey::hotkey::{Code, HotKey, Modifiers};
+use global_hotkey::hotkey::HotKey;
 use global_hotkey::{GlobalHotKeyEvent, GlobalHotKeyManager, HotKeyState};
+use serde::{Deserialize, Serialize};
 use tray::TrayState;
 use windows::Win32::Foundation::{HWND, LPARAM, POINT, RECT};
 use windows::Win32::Graphics::Gdi::{
@@ -58,8 +59,48 @@ unsafe extern "system" fn ctrl_handler(ctrl_type: u32) -> BOOL {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+struct MyConfig {
+    version: u8,
+    key_toggle: String,
+    #[serde(alias = "key_regist")]
+    key_track: String,
+}
+
+impl Default for MyConfig {
+    fn default() -> Self {
+        Self {
+            version: 1,
+            key_toggle: "F8".to_string(),
+            key_track: "Ctrl+Alt+Q".to_string(),
+        }
+    }
+}
+
+fn parse_hotkey_or_default(config_value: &str, default_value: &str, field: &str) -> HotKey {
+    match config_value.parse::<HotKey>() {
+        Ok(hotkey) => hotkey,
+        Err(e) => {
+            warn!(
+                field,
+                value = %config_value,
+                error = %e,
+                fallback = %default_value,
+                "Invalid hotkey in config, using default"
+            );
+            default_value
+                .parse::<HotKey>()
+                .expect("default hotkey must be valid")
+        }
+    }
+}
+
 fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
+    let path = confy::get_configuration_file_path("quake-modoki", None)?;
+    info!("=== Config Path ===");
+    info!("Path: {}", path.to_str().unwrap());
+    let cfg: MyConfig = confy::load("quake-modoki", None)?;
 
     debug!("=== Window List ===");
     list_windows();
@@ -74,20 +115,27 @@ fn main() -> anyhow::Result<()> {
     let manager =
         GlobalHotKeyManager::new().map_err(|e| anyhow::anyhow!("GlobalHotKeyManager: {e}"))?;
 
-    // Toggle hotkey: F8
-    let hotkey_toggle = HotKey::new(None, Code::F8);
+    let default_cfg = MyConfig::default();
+    let hotkey_toggle =
+        parse_hotkey_or_default(&cfg.key_toggle, &default_cfg.key_toggle, "key_toggle");
     manager
         .register(hotkey_toggle)
         .map_err(|e| anyhow::anyhow!("Toggle hotkey register: {e}"))?;
 
-    // Tracking hotkey: Ctrl+Alt+Q
-    let hotkey_track = HotKey::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyQ);
+    let hotkey_track = parse_hotkey_or_default(&cfg.key_track, &default_cfg.key_track, "key_track");
     manager
         .register(hotkey_track)
         .map_err(|e| anyhow::anyhow!("Track hotkey register: {e}"))?;
 
-    info!("Hotkeys registered: F8 (toggle), Ctrl+Alt+Q (track)");
-    info!("Focus a window and press Ctrl+Alt+Q to register it, then F8 to toggle.");
+    info!(
+        toggle = %hotkey_toggle,
+        track = %hotkey_track,
+        "Hotkeys registered from config"
+    );
+    info!(
+        "Focus a window and press {} to register it, then {} to toggle.",
+        hotkey_track, hotkey_toggle
+    );
 
     // Install Ctrl-C handler for graceful shutdown
     unsafe { SetConsoleCtrlHandler(Some(ctrl_handler), true) }

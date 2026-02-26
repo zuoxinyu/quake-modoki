@@ -1,6 +1,6 @@
 [package]
 name = "quake-modoki"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 authors = ["oshiteku"]
 description = "Quake Modoki - Make every window act like Quake Mode"
@@ -30,6 +30,8 @@ tray-icon = "0.21"
 muda = "0.17"
 winreg = "0.55"
 windows = { version = "0.62.2", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_UI_Shell", "Win32_Graphics_Gdi", "Win32_Graphics_Dwm", "Win32_System_Threading", "Win32_UI_Accessibility", "Win32_System_Console"] }
+serde = { version = "1.0", features = ["derive"] }
+confy = "2.0"
 
 [dev-dependencies]
 serial_test = "3"
